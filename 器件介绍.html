@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PN 结特性仿真实验报告 (Final v2.1)</title>
+
+    <!-- 1. 引入 Reveal.js (PPT框架) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.5.0/reveal.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.5.0/theme/white.min.css">
+    <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/atom-one-light.min.css">
+
+    <!-- 2. 引入 Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- 3. MathJax 配置 (修复乱码的关键) -->
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                displayMath: [['$$', '$$'], ['\\[', '\\]']]
+            },
+            svg: { fontCache: 'global' }
+        };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+    <!-- 4. 字体优化 -->
+    <link
+        href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&family=Noto+Serif+SC:wght@400;700&display=swap"
+        rel="stylesheet">
+
+    <style>
+        /* --- 科学报告主题定制 --- */
+        :root {
+            --primary-color: #1e293b;
+            --accent-color: #3b82f6;
+            --bg-grid-color: rgba(59, 130, 246, 0.05);
+        }
+
+        body {
+            background: linear-gradient(135deg, #f0f4ff 0%, #ffffff 100%);
+            font-family: 'Lato', sans-serif !important;
+            color: #334155;
+        }
+
+        /* 字体大小微调 */
+        .reveal {
+            font-size: 24px;
+            color: #334155;
+        }
+
+        .reveal h1,
+        .reveal h2,
+        .reveal h3,
+        .reveal h4 {
+            font-family: 'Noto Serif SC', serif;
+            color: var(--primary-color);
+            text-transform: none;
+            font-weight: 700;
+        }
+
+        .reveal h1 {
+            font-size: 2.2em;
+            border-bottom: none;
+            margin-bottom: 0.5em;
+        }
+
+        .reveal h2 {
+            font-size: 1.5em;
+            border-bottom: 3px solid var(--accent-color);
+            padding-bottom: 10px;
+            display: inline-block;
+            margin-bottom: 30px;
+        }
+
+        .container {
+            display: flex;
+            gap: 20px;
+            align-items: stretch;
+            height: 100%;
+        }
+
+        .col {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .sci-card {
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(226, 232, 240, 0.8);
+            padding: 20px;
+            height: 100%;
+        }
+
+        .highlight-text {
+            color: var(--accent-color);
+            font-weight: 700;
+        }
+
+        /* 页眉页脚 */
+        .slide-header {
+            position: absolute;
+            top: 15px;
+            left: 20px;
+            font-size: 14px;
+            color: #64748b;
+            font-weight: bold;
+            z-index: 10;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .slide-footer {
+            position: absolute;
+            bottom: 15px;
+            right: 20px;
+            font-size: 12px;
+            color: #94a3b8;
+            z-index: 10;
+        }
+
+        /* 列表优化 */
+        .reveal ul.sci-list {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        .reveal ul.sci-list li {
+            padding-left: 1.2em;
+            position: relative;
+            margin-bottom: 0.8em;
+            font-size: 0.95em;
+            line-height: 1.5;
+        }
+
+        .reveal ul.sci-list li::before {
+            content: "•";
+            color: var(--accent-color);
+            position: absolute;
+            left: 0;
+            top: 0;
+            font-size: 1.2em;
+            font-weight: bold;
+        }
+
+        /* 公式块样式 */
+        .math-block {
+            background: #f1f5f9;
+            border-left: 4px solid var(--accent-color);
+            padding: 10px 15px;
+            margin: 15px 0;
+            border-radius: 0 6px 6px 0;
+            font-size: 1.0em;
+        }
+
+        /* 装饰背景 */
+        .bg-circle {
+            position: absolute;
+            border-radius: 50%;
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(147, 197, 253, 0.1));
+            z-index: -1;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- 背景装饰 -->
+    <div class="bg-circle" style="width: 500px; height: 500px; top: -200px; right: -200px;"></div>
+    <div class="bg-circle" style="width: 300px; height: 300px; bottom: -100px; left: -100px;"></div>
+
+    <div class="slide-header">
+        <span style="font-size:1.5em; color: #3b82f6;">⚛</span>
+        <span>SEMICONDUCTOR DEVICE LAB REPORT</span>
+    </div>
+    <div class="slide-footer">
+        Generated by Interactive Lab Toolkit | 2025
+    </div>
+
+    <div class="reveal">
+        <div class="slides">
+
+            <!-- Slide 1: 封面 -->
+
+
+            <!-- Slide 2: 实验任务 -->
+            <section>
+                <h2>01. 实验任务 (Objectives)</h2>
+                <div class="container">
+                    <div class="col">
+                        <div class="sci-card">
+                            <h4 class="text-lg font-bold mb-4 text-slate-700 border-b pb-2 flex items-center">
+                                <span class="mr-2 text-2xl">🎯</span> 核心目标
+                            </h4>
+                            <ul class="sci-list text-base space-y-3">
+                                <li><strong>构建器件模型：</strong>在 TCAD 中搭建具有<span class="highlight-text">高斯掺杂分布</span>的硅基 PN
+                                    结。</li>
+                                <li><strong>特性扫描：</strong>执行电压扫描 ($ -5V \to 1.0V $)，获取完整 I-V 曲线。</li>
+                                <li><strong>参数提取：</strong>定位对数坐标下的<span class="highlight-text">线性区域</span>，提取理想因子 ($n$)
+                                    和饱和电流 ($I_s$)。</li>
+                                <li><strong>模型验证：</strong>通过拟合优度 ($R^2$) 验证 Shockley 方程的准确性。</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="col" style="flex: 0.6;">
+                        <div class="sci-card flex items-center justify-center bg-blue-50/50 border-blue-100">
+                            <div class="text-center">
+                                <div style="font-size: 80px; margin-bottom: 20px; opacity: 0.8;">📉</div>
+                                <p class="font-bold text-blue-800 text-lg">数据驱动分析</p>
+                                <p class="text-sm text-blue-600 mt-2">Data-Driven Approach</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Slide 3: 实验方法 (Code Updated) -->
+            <section>
+                <h2>02. 实验方法 (Methodology)</h2>
+                <div class="container">
+                    <div class="col" style="flex: 1.3;">
+                        <div class="sci-card bg-slate-900 text-slate-200 border-slate-700">
+                            <div class="flex justify-between items-center mb-2 border-b border-slate-700 pb-2">
+                                <span
+                                    class="text-xs font-bold text-blue-400 px-2 py-1 rounded border border-blue-400/30">CODE
+                                    SNIPPET</span>
+                                <span class="text-xs text-slate-400">Silvaco Atlas</span>
+                            </div>
+                            <pre><code class="language-c" style="font-size: 0.65em; line-height: 1.3; background: transparent; max-height: 400px; overflow-y: hidden;">
+go atlas
+
+# 1. 结构定义
+mesh space.mult=1.0
+x.mesh loc=0.00 spacing=0.1
+x.mesh loc=1.00 spacing=0.1
+y.mesh loc=0.00 spacing=0.05
+y.mesh loc=4.00 spacing=0.05
+
+region num=1 material=Silicon
+elec num=1 name=anode   top
+elec num=2 name=cathode bottom
+
+doping n.type conc=1e15 uniform
+doping p.type conc=1e18 gaussian junction=0.5 char=0.15
+
+models srh conmob fldmob print
+method newton trap
+
+# 2. 关键步骤：初始化，生成图像
+solve init
+save outf=pn_structure.str
+# 3. 只扫描 0V 到 1.2V，步长 0.01V
+log outf=pn_iv_curve.log
+solve vanode=0 vstep=0.01 vfinal=1.2 name=anode
+log off
+
+quit
+                        </code></pre>
+                        </div>
+                    </div>
+                    <div class="col">
+                        <div class="sci-card bg-white">
+                            <h4 class="text-base font-bold text-slate-700 mb-4">数学模型基础</h4>
+                            <div class="p-3 bg-slate-50 border border-slate-200 rounded-lg mb-3 shadow-inner">
+                                $$ I \approx I_s e^{\frac{qV}{nkT}} $$
+                            </div>
+                            <p class="text-sm text-slate-600 mb-2 font-bold">线性化处理 (Linearization):</p>
+                            <div class="p-3 bg-slate-50 border border-slate-200 rounded-lg shadow-inner">
+                                $$ \ln(I) = \frac{q}{nkT}V + \ln(I_s) $$
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            - Slide 4: 数学模型建立 -->
+            <section>
+                <h2>03. 数学模型建立</h2>
+                <div class="container">
+                    <div class="col">
+                        <div class="sci-card">
+                            <h4 class="text-lg font-bold text-blue-800 border-b pb-2 mb-4 flex items-center">
+                                <span
+                                    class="mr-2 bg-blue-100 text-blue-600 rounded-full w-6 h-6 flex items-center justify-center text-xs">1</span>
+                                Shockley 方程
+                            </h4>
+                            <p class="text-slate-600 mb-3 text-base">PN 结电流由扩散与复合电流组成：</p>
+
+                            <div class="math-block text-center">
+                                $$I = I_s \left( e^{\frac{qV}{nkT}} - 1 \right)$$
+                            </div>
+
+                            <div class="grid grid-cols-2 gap-3 mt-4">
+                                <div class="bg-slate-50 p-3 rounded border border-slate-200">
+                                    <span class="block text-xs font-bold text-slate-500 mb-1">Is (饱和电流)</span>
+                                    <span class="text-xs text-slate-700 leading-tight block">受几何尺寸、掺杂及本征载流子浓度 $n_i$
+                                        影响。</span>
+                                </div>
+                                <div class="bg-slate-50 p-3 rounded border border-slate-200">
+                                    <span class="block text-xs font-bold text-slate-500 mb-1">kT/q (热电压)</span>
+                                    <span class="text-xs text-slate-700 leading-tight block">300K 时约为 <strong>0.0259
+                                            V</strong>。</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col">
+                        <div class="sci-card">
+                            <h4 class="text-lg font-bold text-blue-800 border-b pb-2 mb-4 flex items-center">
+                                <span
+                                    class="mr-2 bg-blue-100 text-blue-600 rounded-full w-6 h-6 flex items-center justify-center text-xs">2</span>
+                                线性化提取策略
+                            </h4>
+                            <p class="text-slate-600 mb-3 text-sm">当 $V \gg 3kT/q$ 时，$e^{\frac{qV}{nkT}} \gg
+                                1$，方程简化并取对数：</p>
+
+                            <div class="math-block text-center" style="padding: 10px;">
+                                $$ \ln(I) = \frac{q}{nkT}V + \ln(I_s) $$
+                            </div>
+
+                            <div class="bg-blue-50/50 border border-blue-100 rounded-lg p-4 mt-2">
+                                <h5 class="font-bold text-blue-800 mb-2 text-xs uppercase tracking-wide">参数反解 (Parameter
+                                    Extraction)
+                                </h5>
+                                <ul class="sci-list space-y-1 text-sm">
+                                    <li><strong>拟合形式：</strong> $y = mx + c$ (其中 $y=\ln I, x=V$)</li>
+                                    <li><strong>理想因子：</strong> $n = \frac{q}{m \cdot kT}$</li>
+                                    <li><strong>饱和电流：</strong> $I_s = e^c$</li>
+                                    <li><strong>线性区间：</strong> <span class="bg-yellow-200 px-1 rounded">0.4V -
+                                            0.7V</span> (典型值)
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Slide 5: 物理规律与误差分析 -->
+            <section>
+                <h2>04. 物理规律与误差分析</h2>
+                <div class="container">
+                    <div class="col">
+                        <div class="sci-card">
+                            <h4 class="text-lg font-bold text-slate-800 border-b pb-2 mb-3">理想因子 n 的物理含义</h4>
+                            <ul class="space-y-3">
+                                <li class="flex items-start">
+                                    <span
+                                        class="bg-green-100 text-green-700 font-bold px-2 py-0.5 rounded text-xs mr-2 mt-1 min-w-[50px] text-center">n
+                                        = 1</span>
+                                    <span class="text-slate-600 text-sm"><strong>扩散电流主导</strong><br>理想状态，中等偏置电压。</span>
+                                </li>
+                                <li class="flex items-start">
+                                    <span
+                                        class="bg-orange-100 text-orange-700 font-bold px-2 py-0.5 rounded text-xs mr-2 mt-1 min-w-[50px] text-center">n
+                                        = 2</span>
+                                    <span class="text-slate-600 text-sm"><strong>复合电流主导</strong><br>耗尽层 SRH
+                                        复合，小电流区。</span>
+                                </li>
+                                <li class="flex items-start">
+                                    <span
+                                        class="bg-slate-100 text-slate-600 font-bold px-2 py-0.5 rounded text-xs mr-2 mt-1 min-w-[50px] text-center">1&#60;n&#60;2</span>
+                                    <span class="text-slate-600 text-sm"><strong>过渡区域</strong><br>两种机制共同作用。</span>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="col">
+                        <div class="sci-card bg-gradient-to-br from-white to-blue-50/30">
+                            <h4 class="text-lg font-bold text-slate-800 border-b pb-2 mb-3">本实验分析</h4>
+
+                            <div class="mb-4">
+                                <h5 class="font-bold text-blue-700 mb-1 text-sm flex items-center">
+                                    <span class="w-1.5 h-1.5 bg-blue-500 rounded-full mr-2"></span> 线性区验证
+                                </h5>
+                                <p class="text-slate-600 text-sm leading-relaxed text-justify">
+                                    在 <strong>0.4V - 0.7V</strong> 区间，$R^2 > 0.999$。提取出 $n \approx 1.05$，证明在此范围内器件由<span
+                                        class="highlight-text">扩散机制主导</span>。
+                                </p>
+                            </div>
+
+                            <div>
+                                <h5 class="font-bold text-red-700 mb-1 text-sm flex items-center">
+                                    <span class="w-1.5 h-1.5 bg-red-500 rounded-full mr-2"></span> 误差分析
+                                </h5>
+                                <p class="text-slate-600 text-sm leading-relaxed text-justify">
+                                    当 $V > 0.8V$ 时，曲线偏离直线。原因为体电阻导致的<strong>串联电阻 ($R_s$) 效应</strong>，使结电压 $V_{junction} =
+                                    V_{applied}
+                                    - I \cdot R_s$ 降低。
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Slide 6: 结论 -->
+            <section>
+                <h2>05. 结论与展望 (Conclusion)</h2>
+                <div class="sci-card mt-4">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-5 text-left px-2 py-2">
+
+                        <div class="p-3 rounded-lg bg-green-50/50 border border-green-100">
+                            <div class="text-2xl mb-2">✅</div>
+                            <h4 class="text-base font-bold text-slate-800 mb-1">仿真成功</h4>
+                            <p class="text-sm text-slate-600 leading-relaxed">
+                                成功构建高斯掺杂 PN 结模型，获取了完整 I-V 曲线。
+                            </p>
+                        </div>
+
+                        <div class="p-3 rounded-lg bg-blue-50/50 border border-blue-100">
+                            <div class="text-2xl mb-2">📊</div>
+                            <h4 class="text-base font-bold text-slate-800 mb-1">模型验证</h4>
+                            <p class="text-sm text-slate-600 leading-relaxed">
+                                强反型区线性拟合优度极高，验证了 Shockley 理论。
+                            </p>
+                        </div>
+
+                        <div class="p-3 rounded-lg bg-purple-50/50 border border-purple-100">
+                            <div class="text-2xl mb-2">🔬</div>
+                            <h4 class="text-base font-bold text-slate-800 mb-1">工艺指导</h4>
+                            <p class="text-sm text-slate-600 leading-relaxed">
+                                $n \approx 1.05$ 表明晶格质量良好。需优化接触电阻以改善大功率性能。
+                            </p>
+                        </div>
+
+                    </div>
+                </div>
+
+                <div class="mt-12 text-center text-xs text-slate-400 font-bold tracking-widest uppercase">
+                    [ End of Report ]
+                </div>
+            </section>
+
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.5.0/reveal.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.5.0/plugin/highlight/highlight.min.js"></script>
+
+    <script>
+        // 初始化 Reveal.js
+        Reveal.initialize({
+            hash: true,
+            slideNumber: 'c/t',
+            controls: true,
+            progress: true,
+            center: true,
+            transition: 'slide',
+            plugins: [RevealHighlight]
+        });
+    </script>
+</body>
+
+</html>

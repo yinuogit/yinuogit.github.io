@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>虚拟实验室: PN 结参数提取 (Web版)</title>
+    <script src="https://cdn.plot.ly/plotly-2.24.1.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background-color: #f3f4f6;
+            font-family: 'Segoe UI', Roboto, sans-serif;
+        }
+
+        .card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .sidebar {
+            background: #1f2937;
+            color: white;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .input-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 0.9em;
+            color: #9ca3af;
+        }
+
+        select,
+        input[type="number"] {
+            width: 100%;
+            padding: 8px;
+            border-radius: 6px;
+            border: 1px solid #4b5563;
+            background: #374151;
+            color: white;
+        }
+
+        .slider-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .metric-box {
+            background: #eff6ff;
+            border-left: 4px solid #3b82f6;
+            padding: 15px;
+            border-radius: 4px;
+        }
+
+        .metric-value {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #1e40af;
+        }
+
+        .metric-label {
+            font-size: 0.85em;
+            color: #6b7280;
+        }
+
+        /* 双滑块样式 */
+        .range-slider {
+            position: relative;
+            height: 5px;
+            background: #4b5563;
+            border-radius: 5px;
+            margin-top: 20px;
+            margin-bottom: 20px;
+        }
+
+        .range-selected {
+            height: 100%;
+            left: 30%;
+            right: 30%;
+            position: absolute;
+            border-radius: 5px;
+            background: #3b82f6;
+        }
+
+        .range-input {
+            position: absolute;
+            width: 100%;
+            height: 5px;
+            top: -7px;
+            background: none;
+            pointer-events: none;
+            -webkit-appearance: none;
+        }
+
+        .range-input::-webkit-slider-thumb {
+            height: 18px;
+            width: 18px;
+            border-radius: 50%;
+            background: #3b82f6;
+            pointer-events: auto;
+            -webkit-appearance: none;
+            cursor: pointer;
+            border: 2px solid white;
+        }
+    </style>
+</head>
+
+<body class="flex">
+
+    <div class="sidebar w-1/4">
+        <h2 class="text-xl font-bold mb-6">🔬 虚拟实验室</h2>
+
+        <div class="input-group">
+            <label>1. 上传 TCAD Log 文件</label>
+            <input type="file" id="fileInput" accept=".log,.txt,.csv"
+                class="block w-full text-sm text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-600 file:text-white hover:file:bg-blue-700" />
+        </div>
+
+        <div id="controls" style="opacity: 0.5; pointer-events: none;">
+            <div class="border-t border-gray-600 my-4"></div>
+
+            <div class="input-group">
+                <label>2. 列映射选择</label>
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <span class="text-xs">电压轴 (X)</span>
+                        <select id="colSelectX"></select>
+                    </div>
+                    <div>
+                        <span class="text-xs">电流轴 (Y)</span>
+                        <select id="colSelectY"></select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="border-t border-gray-600 my-4"></div>
+
+            <div class="input-group">
+                <label>3. 拟合区间微调 (V)</label>
+                <div class="flex justify-between text-xs mb-2">
+                    <span id="rangeMinDisplay">0.40V</span>
+                    <span id="rangeMaxDisplay">0.70V</span>
+                </div>
+                <div class="range-slider">
+                    <div class="range-selected" id="rangeProgress"></div>
+                </div>
+                <div class="relative h-4">
+                    <input type="range" class="range-input" id="rangeMin" min="0" max="1.2" step="0.01" value="0.4">
+                    <input type="range" class="range-input" id="rangeMax" min="0" max="1.2" step="0.01" value="0.7">
+                </div>
+            </div>
+
+            <div class="mt-4 text-xs text-gray-400 bg-gray-800 p-2 rounded">
+                <p>💡 提示：</p>
+                <p>电压通常在 Col 1 (0.00~1.20)</p>
+                <p>电流通常在 Col 2 (1e-18~...)</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="w-3/4 p-8">
+        <div class="card">
+            <h1 class="text-2xl font-bold text-gray-800 mb-2">PN 结 I-V 特性分析报告</h1>
+            <p class="text-gray-500 text-sm">基于 Web 的交互式 Silvaco Log 解析器</p>
+        </div>
+
+        <div class="grid grid-cols-3 gap-4 mb-6">
+            <div class="metric-box">
+                <div class="metric-label">理想因子 (n)</div>
+                <div class="metric-value" id="resN">--</div>
+                <div class="text-xs text-green-600" id="resNCheck">等待计算</div>
+            </div>
+            <div class="metric-box">
+                <div class="metric-label">饱和电流 (Is)</div>
+                <div class="metric-value" id="resIs">--</div>
+                <div class="metric-label text-xs">Amperes</div>
+            </div>
+            <div class="metric-box">
+                <div class="metric-label">拟合优度 (R²)</div>
+                <div class="metric-value" id="resR2">--</div>
+                <div class="metric-label text-xs">Linearity</div>
+            </div>
+        </div>
+
+        <div class="card" style="height: 500px;">
+            <div id="plotDiv" style="width: 100%; height: 100%;"></div>
+        </div>
+
+        <div class="card">
+            <h3 class="font-bold mb-4">数据预览 (前 5 行)</h3>
+            <div class="overflow-x-auto">
+                <table class="min-w-full text-sm text-left text-gray-500" id="previewTable">
+                    <thead class="text-xs text-gray-700 uppercase bg-gray-50">
+                        <tr id="tableHead"></tr>
+                    </thead>
+                    <tbody id="tableBody"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 全局状态
+        let rawData = []; // 存储解析后的二维数组
+        let colsCount = 0;
+
+        const dom = {
+            fileInput: document.getElementById('fileInput'),
+            controls: document.getElementById('controls'),
+            colSelectX: document.getElementById('colSelectX'),
+            colSelectY: document.getElementById('colSelectY'),
+            rangeMin: document.getElementById('rangeMin'),
+            rangeMax: document.getElementById('rangeMax'),
+            rangeMinDisplay: document.getElementById('rangeMinDisplay'),
+            rangeMaxDisplay: document.getElementById('rangeMaxDisplay'),
+            rangeProgress: document.getElementById('rangeProgress'),
+            resN: document.getElementById('resN'),
+            resIs: document.getElementById('resIs'),
+            resR2: document.getElementById('resR2'),
+            resNCheck: document.getElementById('resNCheck'),
+            tableHead: document.getElementById('tableHead'),
+            tableBody: document.getElementById('tableBody')
+        };
+
+        // 1. 文件上传监听
+        dom.fileInput.addEventListener('change', function (e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                const content = e.target.result;
+                parseLog(content);
+            };
+            reader.readAsText(file);
+        });
+
+        // 2. 解析器 (核心逻辑)
+        function parseLog(content) {
+            rawData = [];
+            const lines = content.split('\n');
+
+            // 专门解析 Silvaco 'd ' 开头的行
+            lines.forEach(line => {
+                line = line.trim();
+                if (line.startsWith('d ')) {
+                    // 去掉 'd '，按空格分割，过滤空串，转浮点
+                    const parts = line.substring(1).trim().split(/\s+/).map(Number);
+                    // 确保没有 NaN
+                    if (parts.every(n => !isNaN(n))) {
+                        rawData.push(parts);
+                    }
+                }
+            });
+
+            if (rawData.length === 0) {
+                alert("未找到有效数据！请确认文件包含以 'd' 开头的 Silvaco 数据行。");
+                return;
+            }
+
+            colsCount = rawData[0].length;
+            initControls();
+            updatePreviewTable();
+            calculateAndPlot(); // 初始绘制
+
+            // 激活控制面板
+            dom.controls.style.opacity = "1";
+            dom.controls.style.pointerEvents = "auto";
+        }
+
+        // 3. 初始化下拉菜单
+        function initControls() {
+            dom.colSelectX.innerHTML = '';
+            dom.colSelectY.innerHTML = '';
+
+            for (let i = 0; i < colsCount; i++) {
+                const optX = new Option(`Col ${i}`, i);
+                const optY = new Option(`Col ${i}`, i);
+                dom.colSelectX.add(optX);
+                dom.colSelectY.add(optY);
+            }
+
+            // 智能推测默认值
+            // 电压通常是第 2 列 (index 1)，电流通常是第 3 列 (index 2)
+            if (colsCount > 1) dom.colSelectX.value = 1;
+            if (colsCount > 2) dom.colSelectY.value = 2;
+        }
+
+        // 4. 更新表格预览
+        function updatePreviewTable() {
+            dom.tableHead.innerHTML = '';
+            dom.tableBody.innerHTML = '';
+
+            // 表头
+            for (let i = 0; i < colsCount; i++) {
+                const th = document.createElement('th');
+                th.className = "px-6 py-3";
+                th.innerText = `Col ${i}`;
+                dom.tableHead.appendChild(th);
+            }
+
+            // 表内容 (只显示前 5 行)
+            rawData.slice(0, 5).forEach(row => {
+                const tr = document.createElement('tr');
+                tr.className = "bg-white border-b";
+                row.forEach(val => {
+                    const td = document.createElement('td');
+                    td.className = "px-6 py-4";
+                    td.innerText = val.toExponential(4);
+                    tr.appendChild(td);
+                });
+                dom.tableBody.appendChild(tr);
+            });
+        }
+
+        // 5. 双滑块逻辑
+        function updateSliderUI() {
+            let min = parseFloat(dom.rangeMin.value);
+            let max = parseFloat(dom.rangeMax.value);
+
+            // 防止交叉
+            if (min > max - 0.05) {
+                dom.rangeMin.value = max - 0.05;
+                min = max - 0.05;
+            }
+
+            // 更新显示文字
+            dom.rangeMinDisplay.innerText = min.toFixed(2) + 'V';
+            dom.rangeMaxDisplay.innerText = max.toFixed(2) + 'V';
+
+            // 更新进度条颜色
+            const total = 1.2; // 假设最大 1.2V
+            const leftP = (min / total) * 100;
+            const rightP = (max / total) * 100;
+            dom.rangeProgress.style.left = leftP + "%";
+            dom.rangeProgress.style.right = (100 - rightP) + "%";
+        }
+
+        dom.rangeMin.addEventListener('input', () => { updateSliderUI(); calculateAndPlot(); });
+        dom.rangeMax.addEventListener('input', () => { updateSliderUI(); calculateAndPlot(); });
+        dom.colSelectX.addEventListener('change', calculateAndPlot);
+        dom.colSelectY.addEventListener('change', calculateAndPlot);
+
+        // 6. 核心计算与绘图
+        function calculateAndPlot() {
+            const colX = parseInt(dom.colSelectX.value);
+            const colY = parseInt(dom.colSelectY.value);
+            const minV = parseFloat(dom.rangeMin.value);
+            const maxV = parseFloat(dom.rangeMax.value);
+
+            // 提取数据
+            const V = rawData.map(r => r[colX]);
+            const I = rawData.map(r => Math.abs(r[colY])); // 绝对值
+
+            // 筛选拟合区间
+            let fitV = [];
+            let fitLnI = [];
+
+            for (let i = 0; i < V.length; i++) {
+                if (V[i] >= minV && V[i] <= maxV && I[i] > 1e-20) {
+                    fitV.push(V[i]);
+                    fitLnI.push(Math.log(I[i]));
+                }
+            }
+
+            // 线性拟合 (最小二乘法)
+            let n_val = 0, Is_val = 0, r2 = 0;
+            let fitLineY = []; // 用于绘图的拟合线数据
+
+            if (fitV.length > 2) {
+                const result = linearRegression(fitV, fitLnI);
+                const slope = result.slope;
+                const intercept = result.intercept;
+                r2 = result.r2;
+
+                // 物理参数提取
+                const q = 1.602e-19;
+                const k = 1.38e-23;
+                const T = 300;
+
+                n_val = slope !== 0 ? q / (slope * k * T) : 0;
+                Is_val = Math.exp(intercept);
+
+                // 生成拟合线上的点 (为了画红线)
+                fitLineY = fitV.map(v => Math.exp(slope * v + intercept));
+
+                // 更新 UI
+                dom.resN.innerText = n_val.toFixed(4);
+                dom.resIs.innerText = Is_val.toExponential(2);
+                dom.resR2.innerText = r2.toFixed(4);
+
+                if (n_val >= 1 && n_val <= 2) {
+                    dom.resNCheck.innerText = "✅ 物理意义合理";
+                    dom.resNCheck.className = "text-xs text-green-600";
+                } else {
+                    dom.resNCheck.innerText = "⚠️ 超出范围 (正常 1~2)";
+                    dom.resNCheck.className = "text-xs text-orange-500";
+                }
+            } else {
+                dom.resN.innerText = "--";
+                dom.resIs.innerText = "--";
+                dom.resR2.innerText = "--";
+                dom.resNCheck.innerText = "数据点不足";
+            }
+
+
+
+            // 绘图 (Plotly)
+            const trace1 = {
+                x: V,
+                y: I,
+                mode: 'lines',
+                name: 'TCAD Raw Data',
+                line: { color: '#2563eb', width: 2 }
+            };
+
+            const trace2 = {
+                x: fitV,
+                y: fitLineY,
+                mode: 'lines',
+                name: `Fit (n=${n_val.toFixed(2)})`,
+                line: { color: '#dc2626', width: 3, dash: 'dash' }
+            };
+
+            const layout = {
+                title: 'I-V Characteristics (Semi-Log)',
+                xaxis: { title: 'Voltage (V)' },
+                yaxis: {
+                    title: 'Current (A)',
+                    type: 'log',
+                    exponentformat: 'e' // 科学计数法
+                },
+                margin: { t: 40, r: 20, l: 60, b: 40 },
+                showlegend: true,
+                legend: { x: 0, y: 1 }
+            };
+
+            Plotly.newPlot('plotDiv', [trace1, trace2], layout, { responsive: true });
+        }
+
+        // 辅助函数: 线性回归
+        function linearRegression(x, y) {
+            const n = x.length;
+            let sumX = 0, sumY = 0, sumXY = 0, sumXX = 0;
+
+            for (let i = 0; i < n; i++) {
+                sumX += x[i];
+                sumY += y[i];
+                sumXY += x[i] * y[i];
+                sumXX += x[i] * x[i];
+            }
+
+            const slope = (n * sumXY - sumX * sumY) / (n * sumXX - sumX * sumX);
+            const intercept = (sumY - slope * sumX) / n;
+
+            // 计算 R2
+            let ssTot = 0, ssRes = 0;
+            const meanY = sumY / n;
+            for (let i = 0; i < n; i++) {
+                const yPred = slope * x[i] + intercept;
+                ssRes += Math.pow(y[i] - yPred, 2);
+                ssTot += Math.pow(y[i] - meanY, 2);
+            }
+            const r2 = 1 - (ssRes / ssTot);
+
+            return { slope, intercept, r2 };
+        }
+
+        // 初始化时更新一下UI状态
+        updateSliderUI();
+
+    </script>
+</body>
+
+</html>

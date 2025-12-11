@@ -1,1 +1,182 @@
+<!DOCTYPE html>
+<html lang="UTF-8">
 
+<head>
+    <meta charset="UTF-8">
+    <title>《集成电路科技导论》期末大作业</title>
+    <style>
+        /* --- 全局基础样式 --- */
+        body {
+            font-family: 'Arial', 'Microsoft YaHei', sans-serif;
+            /* 混合字体，更现代 */
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #0f0f23, #1a1a2e);
+            /* 深蓝紫色渐变背景 */
+            color: #e0e0e0;
+            /* 浅灰色文字，护眼且科技感强 */
+            overflow-x: hidden;
+            /* 防止水平滚动条 */
+        }
+
+        /* --- 标题与文本居中 --- */
+        .container {
+            text-align: center;
+            padding: 40px 20px;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        /* --- 科技感标题 --- */
+        h1 {
+            font-size: 3em;
+            margin-bottom: 10px;
+            color: #00e0ff;
+            /* 青蓝色霓虹色 */
+            text-shadow: 0 0 10px rgba(0, 224, 255, 0.7), 0 0 20px rgba(0, 224, 255, 0.5);
+            letter-spacing: 2px;
+            font-weight: bold;
+        }
+
+        h2 {
+            color: #a8d8ff;
+            /* 淡蓝色 */
+            margin-bottom: 30px;
+            font-weight: normal;
+        }
+
+        h3 {
+            color: #00b3ff;
+            margin-top: 30px;
+            border-bottom: 1px solid #0066cc;
+            padding-bottom: 10px;
+            display: inline-block;
+            border-radius: 5px;
+        }
+
+        /* --- 卡片式内容区域 --- */
+        .section {
+            background: rgba(30, 30, 50, 0.6);
+            /* 半透明磨砂玻璃效果 */
+            border: 1px solid #0088ff;
+            border-radius: 15px;
+            padding: 30px;
+            margin: 30px auto;
+            max-width: 800px;
+            box-shadow: 0 0 20px rgba(0, 100, 255, 0.3);
+            backdrop-filter: blur(5px);
+            /* 毛玻璃背景（现代浏览器支持） */
+        }
+
+        /* --- 列表样式 --- */
+        .section ul {
+            list-style: none;
+            padding: 0;
+            display: inline-block;
+            text-align: left;
+            font-size: 1.1em;
+        }
+
+        .section ul li {
+            background: rgba(0, 120, 255, 0.1);
+            margin: 15px 0;
+            padding: 15px 20px;
+            border-left: 4px solid #00e0ff;
+            border-radius: 5px;
+            transition: all 0.3s ease;
+        }
+
+        .section ul li:hover {
+            background: rgba(0, 120, 255, 0.2);
+            transform: translateX(5px);
+            box-shadow: 0 0 15px rgba(0, 120, 255, 0.5);
+        }
+
+        .section ul li a {
+            color: #ffffff;
+            /* 白色字体 */
+            text-decoration: none;
+            /* 去掉下划线（可选） */
+            display: block;
+            /* 让链接占满整个 li 区域 */
+        }
+
+        .section ul li a:hover {
+            color: #ffffff;
+            /* 鼠标悬停时仍保持白色 */
+            text-shadow: 0 0 5px rgba(255, 255, 255, 0.8);
+            /* 可选：添加发光效果 */
+        }
+
+        .section ul li a:visited {
+            color: #ffffff;
+        }
+
+
+        /* --- 链接按钮样式 --- */
+        .nav-links {
+            margin: 40px 0;
+        }
+
+        .nav-links a {
+            display: inline-block;
+            margin: 0 20px;
+            padding: 15px 40px;
+            text-decoration: none;
+            color: #fff;
+            background: linear-gradient(45deg, #0055ff, #00a0ff);
+            border-radius: 50px;
+            font-weight: bold;
+            font-size: 1.1em;
+            box-shadow: 0 0 15px rgba(0, 150, 255, 0.6);
+            transition: all 0.3s ease;
+            border: 1px solid #0088ff;
+        }
+
+        .nav-links a:hover {
+            background: linear-gradient(45deg, #00a0ff, #0055ff);
+            transform: scale(1.05) rotate(2deg);
+            box-shadow: 0 0 25px rgba(0, 200, 255, 0.8);
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+        <h1>《集成电路科技导论》期末大作业</h1>
+        <h3>刘一诺 邵思睿 陶思翰 赵锦泽</h3>
+
+        <!-- 作业题目区域 -->
+        <div id="task" class="section">
+
+            <ul>
+                <li>
+                    <a href="器件-背景式.html" target="_blank">
+                        ○ TCAD题目一：PN结I-V特性仿真与指数模型拟合
+                    </a>
+                </li>
+                <li>
+                    <a href="电路-背景式.html" target="_blank">
+                        ○ 电路题目二：RC低通滤波器的幅频响应
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        // 保留您原有的JS逻辑（如果后续有添加其他section，此逻辑依然有效）
+        function showSection(sectionId) {
+            document.getElementById('task').style.display = 'none';
+            // ... 其他逻辑
+            document.getElementById(sectionId).style.display = 'block';
+        }
+
+        // 默认显示
+        showSection('task');
+    </script>
+</body>
+
+</html>
